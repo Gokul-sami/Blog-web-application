@@ -123,13 +123,9 @@ app.post('/submit', async (req, res) => {
         }
     }
     else if(req.body.mode == 'Submit'){
-        console.log(req.body);
         try {
             await db.query("UPDATE blogs SET title = ($1) WHERE id = $2", [req.body.title, req.body.id]);
             await db.query("UPDATE blogs SET content = ($1) WHERE id = $2", [req.body.content, req.body.id]);
-            // const currentDate = new Date();
-            // const formattedDate = currentDate.toISOString().slice(0, 19).replace("T", " ");
-            // await db.query("UPDATE blogs SET date = ($1) WHERE id = $2", [formattedDate, req.body.id]);
             res.redirect("/");
         } catch (err) {
             console.log(err);
@@ -163,7 +159,7 @@ app.post("/register", async (req, res) => {
     const name = req.body.name;
   
     try {
-      const checkResult = await db.query("SELECT * FROM user_table WHERE email = $1", [
+      const checkResult = await db.query("SELECT * FROM users WHERE email = $1", [
         email,
       ]);
   
@@ -175,7 +171,7 @@ app.post("/register", async (req, res) => {
             console.error("Error hashing password:", err);
           } else {
             const result = await db.query(
-              "INSERT INTO user_table(username, email, password) VALUES ($1, $2, $3) RETURNING *",
+              "INSERT INTO users(username, email, password) VALUES ($1, $2, $3) RETURNING *",
               [name, email, hash]
             );
             const user = result.rows[0];
@@ -194,25 +190,20 @@ app.post("/register", async (req, res) => {
 passport.use(
     new Strategy(async function verify(username, password, cb) {
       try {
-        const result = await db.query("SELECT * FROM user_table WHERE email = $1 ", [
+        const result = await db.query("SELECT * FROM users WHERE email = $1 ", [
           username,
         ]);
         if (result.rows.length > 0) {
-            console.log("email: "+username);
           const user = result.rows[0];
           const storedHashedPassword = user.password;
           bcrypt.compare(password, storedHashedPassword, (err, valid) => {
             if (err) {
-              //Error with password check
               console.error("Error comparing passwords:", err);
               return cb(err);
             } else {
               if (valid) {
-                //Passed password check
-                console.log("User: "+user.username);
                 return cb(null, user);
               } else {
-                //Did not pass password check
                 return cb(null, false);
               }
             }
