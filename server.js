@@ -7,7 +7,6 @@ import passport from "passport";
 import { Strategy } from "passport-local";
 import session from "express-session";
 const { Client } = pkg;
-import { get } from 'http';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,25 +43,6 @@ const db = new Client({
 // });
 db.connect();
 
-// Keep-alive function using ES Modules
-const keepAlive = () => {
-  setInterval(() => {
-    get(`http://${process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000'}/ping`);
-  }, 5 * 60 * 1000); // Ping every 5 minutes
-};
-
-// Ping route
-app.get('/ping', (req, res) => {
-  console.log('Ping received - keeping alive');
-  res.sendStatus(200);
-});
-
-// Start keep-alive after server starts
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  if (process.env.NODE_ENV === 'production') keepAlive();
-});
-
 var blogs = [];
 
 app.get("/", (req, res) => {
@@ -72,7 +52,7 @@ app.get("/", (req, res) => {
 app.get('/home', async (req, res) => {
     try{
         if (req.isAuthenticated()) {
-            const result = await db.query("select * from blogs order by id desc");
+            const result = await db.query("select * from blogs order by date desc");
             blogs = result.rows;
 
             res.render('home.ejs', {
@@ -92,7 +72,7 @@ app.get('/home', async (req, res) => {
 app.get('/myBlogs', async (req, res) => {
     try{
         if (req.isAuthenticated()) {
-            const result = await db.query("SELECT * FROM blogs WHERE author = $1 ORDER BY id DESC", [req.user.username]);
+            const result = await db.query("SELECT * FROM blogs WHERE author = $1 ORDER BY date DESC", [req.user.username]);
             blogs = result.rows;
 
             res.render('myBlogs.ejs', {
@@ -126,7 +106,7 @@ app.post('/create', async (req, res) => {
     try {
         const currentDate = new Date();
         const formattedDate = currentDate.toISOString().slice(0, 19).replace("T", " ");
-        await db.query("INSERT INTO blogs (title, content, author, date) VALUES ($1, $2, $3, $4)", [req.body.title, req.body.content, req.user.username, formattedDate]);
+        await db.query("INSERT INTO blogs (title, content, author, date) VALUES ($1, $2, $3, $4)", [req.body.title, req.body.content, req.body.username, formattedDate]);
         res.redirect("/myBlogs");
     } catch (err) {
         console.log(err);
