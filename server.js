@@ -7,6 +7,7 @@ import passport from "passport";
 import { Strategy } from "passport-local";
 import session from "express-session";
 const { Client } = pkg;
+import { get } from 'http';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,15 +44,14 @@ const db = new Client({
 // });
 db.connect();
 
-// Add this to your existing server.js
+// Keep-alive function using ES Modules
 const keepAlive = () => {
-  const http = require('http');
   setInterval(() => {
-    http.get(`http://${process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000'}/ping`);
+    get(`http://${process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000'}/ping`);
   }, 5 * 60 * 1000); // Ping every 5 minutes
 };
 
-// Add a ping route
+// Ping route
 app.get('/ping', (req, res) => {
   console.log('Ping received - keeping alive');
   res.sendStatus(200);
