@@ -43,6 +43,26 @@ const db = new Client({
 // });
 db.connect();
 
+// Add this to your existing server.js
+const keepAlive = () => {
+  const http = require('http');
+  setInterval(() => {
+    http.get(`http://${process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000'}/ping`);
+  }, 5 * 60 * 1000); // Ping every 5 minutes
+};
+
+// Add a ping route
+app.get('/ping', (req, res) => {
+  console.log('Ping received - keeping alive');
+  res.sendStatus(200);
+});
+
+// Start keep-alive after server starts
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  if (process.env.NODE_ENV === 'production') keepAlive();
+});
+
 var blogs = [];
 
 app.get("/", (req, res) => {
