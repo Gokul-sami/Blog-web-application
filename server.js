@@ -106,7 +106,7 @@ app.post('/create', async (req, res) => {
     try {
         const currentDate = new Date();
         const formattedDate = currentDate.toISOString().slice(0, 19).replace("T", " ");
-        await db.query("INSERT INTO blogs (title, content, author, date) VALUES ($1, $2, $3, $4)", [req.body.title, req.body.content, req.body.username, formattedDate]);
+        await db.query("INSERT INTO blogs (title, content, author, date) VALUES ($1, $2, $3, $4)", [req.body.title, req.body.content, req.user.username, formattedDate]);
         res.redirect("/myBlogs");
     } catch (err) {
         console.log(err);
